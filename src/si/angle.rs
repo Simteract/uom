@@ -1,7 +1,7 @@
 //! Angle (dimensionless quantity).
 
-#[cfg(feature = "std")]
 use super::ratio::Ratio;
+
 
 quantity! {
     /// Angle (dimensionless quantity).
@@ -64,7 +64,6 @@ impl Angle<::si::SI<f64>, f64> {
 }
 
 /// Implementation of various stdlib trigonometric functions
-#[cfg(feature = "std")]
 impl<U, V> Angle<U, V>
 where
     U: ::si::Units<V> + ?Sized,

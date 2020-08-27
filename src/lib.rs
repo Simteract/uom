@@ -246,10 +246,7 @@ pub mod lib {
 // Conditionally import num sub-crate types based on feature selection.
 #[doc(hidden)]
 pub mod num {
-    #[cfg(feature = "std")]
     pub use num_traits::float::Float;
-    #[cfg(not(feature = "std"))]
-    pub use num_traits::float::FloatCore as Float;
 
     pub use num_traits::{pow, FromPrimitive, Num, One, Saturating, Signed, ToPrimitive, Zero};
 
