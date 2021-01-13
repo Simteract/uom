@@ -79,7 +79,7 @@
 ///     }
 /// }
 /// #     mod f32 {
-/// #         Q!(mks, f32/*, (centimeter, gram, second)*/);
+/// #         Q!(crate::mks, f32/*, (centimeter, gram, second)*/);
 /// #     }
 /// # }
 /// ```
@@ -124,7 +124,13 @@ macro_rules! system {
         /// [quantity]: http://jcgm.bipm.org/vim/en/1.1.html
         /// [base]: http://jcgm.bipm.org/vim/en/1.4.html
         /// [quantities]: http://jcgm.bipm.org/vim/en/1.3.html
-        pub trait Dimension: Send + Sync {
+        pub trait Dimension:
+            Send
+            + Sync
+            + Unpin
+            + $crate::lib::panic::RefUnwindSafe
+            + $crate::lib::panic::UnwindSafe
+        {
             $($(#[$name_attr])*
             ///
             /// Quantity dimension.
@@ -144,7 +150,12 @@ macro_rules! system {
         /// [units]: http://jcgm.bipm.org/vim/en/1.13.html
         /// [base]: http://jcgm.bipm.org/vim/en/1.10.html
         /// [quantities]: http://jcgm.bipm.org/vim/en/1.3.html
-        pub trait Units<V>: Send + Sync
+        pub trait Units<V>:
+            Send
+            + Sync
+            + Unpin
+            + $crate::lib::panic::RefUnwindSafe
+            + $crate::lib::panic::UnwindSafe
         where
             V: $crate::Conversion<V>,
         {
@@ -443,7 +454,8 @@ macro_rules! system {
                     for Quantity<Dl, Ul, V>
                 where
                     Dl: Dimension + ?Sized,
-                    $(Dl::$symbol: $crate::lib::ops::$AddSubTrait<Dr::$symbol>,)+
+                    $(Dl::$symbol: $crate::lib::ops::$AddSubTrait<Dr::$symbol>,
+                    <Dl::$symbol as $crate::lib::ops::$AddSubTrait<Dr::$symbol>>::Output: $crate::typenum::Integer,)+
                     Dl::Kind: $crate::marker::$MulDivTrait,
                     Dr: Dimension + ?Sized,
                     Dr::Kind: $crate::marker::$MulDivTrait,
@@ -470,7 +482,8 @@ macro_rules! system {
                     for Quantity<Dl, U, V>
                 where
                     Dl: Dimension + ?Sized,
-                    $(Dl::$symbol: $crate::lib::ops::$AddSubTrait<Dr::$symbol>,)+
+                    $(Dl::$symbol: $crate::lib::ops::$AddSubTrait<Dr::$symbol>,
+                    <Dl::$symbol as $crate::lib::ops::$AddSubTrait<Dr::$symbol>>::Output: $crate::typenum::Integer,)+
                     Dl::Kind: $crate::marker::$MulDivTrait,
                     Dr: Dimension + ?Sized,
                     Dr::Kind: $crate::marker::$MulDivTrait,
@@ -534,7 +547,8 @@ macro_rules! system {
                             D: Dimension + ?Sized,
                             D::Kind: $crate::marker::$MulDivTrait,
                             U: Units<V> + ?Sized,
-                            $($crate::typenum::Z0: $crate::lib::ops::$AddSubTrait<D::$symbol>,)+
+                            $($crate::typenum::Z0: $crate::lib::ops::$AddSubTrait<D::$symbol>,
+                            <$crate::typenum::Z0 as $crate::lib::ops::$AddSubTrait<D::$symbol>>::Output: $crate::typenum::Integer,)+
                         {
                             type Output = Quantity<
                                 $quantities<
@@ -647,7 +661,8 @@ macro_rules! system {
                 $quantities<$($crate::typenum::PartialQuot<D::$symbol, $crate::typenum::P3>),+>,
                 U, V>
             where
-                $(D::$symbol: $crate::lib::ops::PartialDiv<$crate::typenum::P3>,)+
+                $(D::$symbol: $crate::lib::ops::PartialDiv<$crate::typenum::P3>,
+                <D::$symbol as $crate::lib::ops::PartialDiv<$crate::typenum::P3>>::Output: $crate::typenum::Integer,)+
                 D::Kind: $crate::marker::Div,
                 V: $crate::num::Float,
             {
@@ -757,7 +772,8 @@ macro_rules! system {
                 b: Quantity<$quantities<$($crate::typenum::Sum<D::$symbol, Da::$symbol>),+>, Ub, V>,
             ) -> Quantity<$quantities<$($crate::typenum::Sum<D::$symbol, Da::$symbol>),+>, U, V>
             where
-                $(D::$symbol: $crate::lib::ops::Add<Da::$symbol>,)+
+                $(D::$symbol: $crate::lib::ops::Add<Da::$symbol>,
+                <D::$symbol as $crate::lib::ops::Add<Da::$symbol>>::Output: $crate::typenum::Integer,)+
                 D::Kind: $crate::marker::Mul,
                 V: $crate::num::Float,
                 Da: Dimension + ?Sized,
@@ -786,7 +802,8 @@ macro_rules! system {
                 self
             ) -> Quantity<$quantities<$($crate::typenum::Negate<D::$symbol>),+>, U, V>
             where
-                $(D::$symbol: $crate::lib::ops::Neg,)+
+                $(D::$symbol: $crate::lib::ops::Neg,
+                <D::$symbol as $crate::lib::ops::Neg>::Output: $crate::typenum::Integer,)+
                 D::Kind: $crate::marker::Div,
                 V: $crate::num::Float,
             {
@@ -804,7 +821,7 @@ macro_rules! system {
             #[cfg_attr(not(all(feature = "si", feature = "f32")), doc = " ```rust,ignore")]
             /// # use uom::si::f32::*;
             /// # use uom::si::length::meter;
-            /// let a: Area = Length::new::<meter>(3.0).powi(::uom::typenum::P2::new());
+            /// let a: Area = Length::new::<meter>(3.0).powi(crate::uom::typenum::P2::new());
             /// ```
             ///
             /// ## Generic Parameters
@@ -814,7 +831,8 @@ macro_rules! system {
                 self, _e: E
             ) -> Quantity<$quantities<$($crate::typenum::Prod<D::$symbol, E>),+>, U, V>
             where
-                $(D::$symbol: $crate::lib::ops::Mul<E>,)+
+                $(D::$symbol: $crate::lib::ops::Mul<E>,
+                <D::$symbol as $crate::lib::ops::Mul<E>>::Output: $crate::typenum::Integer,)+
                 D::Kind: $crate::marker::Mul,
                 E: $crate::typenum::Integer,
                 V: $crate::num::Float,
@@ -852,7 +870,8 @@ macro_rules! system {
                 $quantities<$($crate::typenum::PartialQuot<D::$symbol, $crate::typenum::P2>),+>,
                 U, V>
             where
-                $(D::$symbol: $crate::typenum::PartialDiv<$crate::typenum::P2>,)+
+                $(D::$symbol: $crate::typenum::PartialDiv<$crate::typenum::P2>,
+                <D::$symbol as $crate::typenum::PartialDiv<$crate::typenum::P2>>::Output: $crate::typenum::Integer,)+
                 D::Kind: $crate::marker::Div,
                 V: $crate::num::Float,
             {
@@ -925,7 +944,7 @@ macro_rules! system {
             U: Units<V> + ?Sized,
             V: $crate::num::Num + $crate::Conversion<V> + $crate::lib::fmt::Debug,
         {
-            fn fmt(&self, f: &mut $crate::lib::fmt::Formatter) -> $crate::lib::fmt::Result {
+            fn fmt<'a>(&self, f: &mut $crate::lib::fmt::Formatter<'a>) -> $crate::lib::fmt::Result {
                 self.value.fmt(f)
                 $(.and_then(|_| {
                     let d = <D::$symbol as $crate::typenum::Integer>::to_i32();
@@ -1439,7 +1458,7 @@ macro_rules! system {
                         V: Num + Conversion<V> + fmt::$style,
                         N: Unit + Conversion<V, T = V::T>,
                     {
-                        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+                        fn fmt<'a>(&self, f: &mut fmt::Formatter<'a>) -> fmt::Result {
                             let value = from_base::<D, U, V, N>(&self.quantity.value);
 
                             value.fmt(f)?;
@@ -1468,8 +1487,8 @@ macro_rules! system {
         /// Macro to implement [`quantity`](si/struct.Quantity.html) type aliases for a specific
         /// [system of units][units] and value storage type.
         ///
-        /// * `$path`: Path to the module where the [`system!`](macro.system.html) macro was run
-        ///   (e.g. `::uom::si`).
+        /// * `$system`: Path to the module where the [`system!`](macro.system.html) macro was run
+        ///   (e.g. `uom::si`).
         /// * `$V`: Underlying value storage type (e.g. `f32`).
         /// * `$U`: Optional. Base units. Pass as a tuple with the desired units: `(meter, kilogram,
         ///   second, ampere, kelvin, mole, candela)`. The system's base units will be used if no
@@ -1539,13 +1558,7 @@ macro_rules! system {
         /// #         }
         /// #     }
         /// mod f32 {
-        ///     mod mks {
-        ///         pub use super::super::*;
-        ///     }
-        ///
-        ///     // `crate::mks` works in Rust 1.30.0 or later. `mod mks {...}` workaround is needed
-        ///     // to support older versions of Rust and the 2018 edition at the same time.
-        ///     Q!(self::mks, f32/*, (centimeter, gram, second)*/);
+        ///     Q!(crate::mks, f32/*, (centimeter, gram, second)*/);
         /// }
         /// # }
         /// ```

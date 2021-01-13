@@ -1,8 +1,8 @@
 uom
 ===
-[![Travis](https://travis-ci.org/iliekturtles/uom.svg?branch=master)](https://travis-ci.org/iliekturtles/uom)
-[![Coveralls](https://coveralls.io/repos/github/iliekturtles/uom/badge.svg?branch=master)](https://coveralls.io/github/iliekturtles/uom?branch=master)
-[![Rustup.rs](https://img.shields.io/badge/rustc-1.31.0%2B-orange.svg)](https://rustup.rs/)
+[![Github Actions](https://img.shields.io/github/workflow/status/iliekturtles/uom/CI%20-%20full%20test%20suite/master?label=build)](https://github.com)
+[![Codecov.io](https://img.shields.io/codecov/c/github/iliekturtles/uom/master)](https://codecov.io/gh/iliekturtles/uom)
+[![Rustup.rs](https://img.shields.io/badge/rustc-1.37.0%2B-orange.svg)](https://rustup.rs/)
 [![Crates.io](https://img.shields.io/crates/v/uom.svg)](https://crates.io/crates/uom)
 [![Crates.io](https://img.shields.io/crates/l/uom.svg)](https://crates.io/crates/uom)
 [![Documentation](https://img.shields.io/badge/documentation-docs.rs-blue.svg)](https://docs.rs/uom)
@@ -23,11 +23,11 @@ Units of measurement is a crate that does automatic type-safe zero-cost
 [orbiter]: https://en.wikipedia.org/wiki/Mars_Climate_Orbiter
 
 ## Usage
-`uom` requires `rustc` 1.31.0 or later. Add this to your `Cargo.toml`:
+`uom` requires `rustc` 1.37.0 or later. Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-uom = "0.29.0"
+uom = "0.31.0"
 ```
 
 and this to your crate root:
@@ -66,6 +66,8 @@ See the [examples](examples) directory for more advanced usage:
    different set of base units. See the [Design](#design) section for implications of choosing
    different base units.
  * [mks.rs](examples/mks.rs) -- Shows how to create a custom system of quantities.
+ * [unit.rs](examples/unit.rs) -- Shows how to add new units to existing quantities in the
+   pre-build SI system.
 
 ## Features
 `uom` has multiple `Cargo` features for controlling available underlying storage types, the
@@ -77,7 +79,7 @@ enabled by default. Features can be cherry-picked by using the `--no-default-fea
 ```toml
 [dependencies]
 uom = {
-    version = "0.29.0",
+    version = "0.31.0",
     default-features = false,
     features = [
         "autoconvert", # automatic base unit conversion.

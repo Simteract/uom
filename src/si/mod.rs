@@ -90,6 +90,7 @@ system! {
         ratio::Ratio,
         specific_heat_capacity::SpecificHeatCapacity,
         solid_angle::SolidAngle,
+        radiant_exposure::RadiantExposure,
         temperature_interval::TemperatureInterval,
         thermal_conductivity::ThermalConductivity,
         thermodynamic_temperature::ThermodynamicTemperature,
@@ -104,20 +105,20 @@ system! {
 /// [`Quantity`](struct.Quantity.html) type aliases using the default base units and parameterized
 /// on the underlying storage type.
 pub mod quantities {
-    ISQ!(si);
+    ISQ!(crate::si);
 }
 
 storage_types! {
     /// [`Quantity`](struct.Quantity.html) type aliases using the default base units.
     pub types: All;
 
-    ISQ!(si, V);
+    ISQ!(crate::si, V);
 }
 
 /// Primitive traits and types representing basic properties of types specific to the SI.
 pub mod marker {
-    use si::{Dimension, Quantity, Units};
-    use Kind;
+    use super::{Dimension, Quantity, Units};
+    use crate::Kind;
 
     /// `AngleKind` is a `Kind` for separating angular quantities from their identically dimensioned
     /// non-angular quantity counterparts. Conversions to and from `AngleKind` quantities are
@@ -130,7 +131,7 @@ pub mod marker {
     /// let a: Angle = Angle::new::<radian>(1.0);
     /// let r: Ratio = a.into();
     /// ```
-    pub trait AngleKind: ::Kind {}
+    pub trait AngleKind: Kind {}
 
     /// `SolidAngleKind` is a `Kind` for separating quantities of solid angles from other
     /// identically dimensioned quantities. Conversions to and from `SolidAngleKind` quantities are
@@ -143,7 +144,7 @@ pub mod marker {
     /// let a: SolidAngle = SolidAngle::new::<steradian>(1.0);
     /// let r: Ratio = a.into();
     /// ```
-    pub trait SolidAngleKind: ::Kind {}
+    pub trait SolidAngleKind: Kind {}
 
     /// `InformationKind` is a `Kind` for separating information quantities from their identically
     /// dimensioned non-information quantity counterparts. Conversions to and from `InformationKind`
@@ -156,23 +157,23 @@ pub mod marker {
     /// let i: Information = Information::new::<kilobyte>(1.0);
     /// let r: Ratio = i.into();
     /// ```
-    pub trait InformationKind: ::Kind {}
+    pub trait InformationKind: Kind {}
 
     /// Kind of thermodynamic temperature.
     pub trait TemperatureKind:
-        ::marker::Mul
-        + ::marker::MulAssign
-        + ::marker::Div
-        + ::marker::DivAssign
-        + ::marker::Rem
-        + ::marker::RemAssign
+        crate::marker::Mul
+        + crate::marker::MulAssign
+        + crate::marker::Div
+        + crate::marker::DivAssign
+        + crate::marker::Rem
+        + crate::marker::RemAssign
     {
     }
 
     /// Kind of constituent concentration in chemical mixtures, which separates mass concentration
     /// from mass density. This `Kind` is also applied to molar concentration and to catalytic
     /// activity concentration.
-    pub trait ConstituentConcentrationKind: ::Kind {}
+    pub trait ConstituentConcentrationKind: Kind {}
 
     /// `impl_from` generates generic inter-Kind implementations of `From`.
     #[cfg(feature = "autoconvert")]
@@ -202,9 +203,16 @@ pub mod marker {
                     V,
                 >
             where
+                L: crate::typenum::Integer,
+                M: crate::typenum::Integer,
+                T: crate::typenum::Integer,
+                I: crate::typenum::Integer,
+                Th: crate::typenum::Integer,
+                N: crate::typenum::Integer,
+                J: crate::typenum::Integer,
                 Ul: Units<V> + ?Sized,
                 Ur: Units<V> + ?Sized,
-                V: ::num_traits::Num + ::Conversion<V>,
+                V: crate::num_traits::Num + crate::Conversion<V>,
             {
                 fn from(
                     val: Quantity<
@@ -227,8 +235,8 @@ pub mod marker {
                     V,
                 > {
                     Self {
-                        dimension: ::lib::marker::PhantomData,
-                        units: ::lib::marker::PhantomData,
+                        dimension: crate::lib::marker::PhantomData,
+                        units: crate::lib::marker::PhantomData,
                         value: super::change_base::<
                             dyn Dimension<
                                 L = L,
@@ -278,8 +286,15 @@ pub mod marker {
                     V,
                 >
             where
+                L: crate::typenum::Integer,
+                M: crate::typenum::Integer,
+                T: crate::typenum::Integer,
+                I: crate::typenum::Integer,
+                Th: crate::typenum::Integer,
+                N: crate::typenum::Integer,
+                J: crate::typenum::Integer,
                 U: Units<V> + ?Sized,
-                V: ::num_traits::Num + ::Conversion<V>,
+                V: crate::num_traits::Num + crate::Conversion<V>,
             {
                 fn from(
                     val: Quantity<
@@ -302,8 +317,8 @@ pub mod marker {
                     V,
                 > {
                     Self {
-                        dimension: ::lib::marker::PhantomData,
-                        units: ::lib::marker::PhantomData,
+                        dimension: crate::lib::marker::PhantomData,
+                        units: crate::lib::marker::PhantomData,
                         value: val.value,
                     }
                 }

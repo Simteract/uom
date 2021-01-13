@@ -1,10 +1,10 @@
 //! Tests for the `quantity!` macro.
 
 storage_types! {
-    use tests::*;
+    use crate::tests::*;
 
-    mod f { Q!(tests, super::V); }
-    mod k { Q!(tests, super::V, (kilometer, kilogram, kelvin)); }
+    mod f { Q!(crate::tests, super::V); }
+    mod k { Q!(crate::tests, super::V, (kilometer, kilogram, kelvin)); }
 
     #[test]
     fn new() {
@@ -38,6 +38,8 @@ storage_types! {
         let m2 = k::Mass::new::<kilogram>(V::from_f64(1.0E-3).unwrap());
 
         Test::assert_eq(&"1 m".parse::<k::Length>().unwrap(), &l1);
+        Test::assert_eq(&"1 meter".parse::<k::Length>().unwrap(), &l1);
+        Test::assert_eq(&"1 meters".parse::<k::Length>().unwrap(), &l1);
         Test::assert_eq(&"1.0 km".parse::<k::Length>().unwrap(), &l2);
         Test::assert_eq(&"1000 kg".parse::<k::Mass>().unwrap(), &m1);
         Test::assert_eq(&"1.0E-3 kg".parse::<k::Mass>().unwrap(), &m2);
@@ -205,9 +207,9 @@ mod fmt {
     }
 
     storage_types! {
-        use tests::*;
+        use crate::tests::*;
 
-        mod f { Q!(tests, super::V); }
+        mod f { Q!(crate::tests, super::V); }
 
         quickcheck! {
             #[allow(trivial_casts)]
@@ -236,9 +238,9 @@ mod fmt {
         storage_types! {
             types: Float;
 
-            use tests::*;
+            use crate::tests::*;
 
-            mod f { Q!(tests, super::V); }
+            mod f { Q!(crate::tests, super::V); }
 
             quickcheck! {
                 #[allow(trivial_casts)]
@@ -259,9 +261,9 @@ mod fmt {
         storage_types! {
             types: PrimInt, BigInt, BigUint;
 
-            use tests::*;
+            use crate::tests::*;
 
-            mod f { Q!(tests, super::V); }
+            mod f { Q!(crate::tests, super::V); }
 
             quickcheck! {
                 #[allow(trivial_casts)]
@@ -293,10 +295,10 @@ mod non_big {
     storage_types! {
         types: Float, PrimInt, Rational, Rational32, Rational64;
 
-        use tests::*;
+        use crate::tests::*;
 
-        mod f { Q!(tests, super::V); }
-        mod k { Q!(tests, super::V, (kilometer, kilogram, kelvin)); }
+        mod f { Q!(crate::tests, super::V); }
+        mod k { Q!(crate::tests, super::V, (kilometer, kilogram, kelvin)); }
 
         quickcheck! {
             #[allow(trivial_casts)]
@@ -343,10 +345,10 @@ mod float {
     storage_types! {
         types: Float;
 
-        use tests::*;
+        use crate::tests::*;
 
-        mod f { Q!(tests, super::V); }
-        mod k { Q!(tests, super::V, (kilometer, kilogram, kelvin)); }
+        mod f { Q!(crate::tests, super::V); }
+        mod k { Q!(crate::tests, super::V, (kilometer, kilogram, kelvin)); }
 
         #[test]
         fn floor() {

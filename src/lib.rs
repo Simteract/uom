@@ -14,11 +14,11 @@
 //! [orbiter]: https://en.wikipedia.org/wiki/Mars_Climate_Orbiter
 //!
 //! ## Usage
-//! `uom` requires `rustc` 1.31.0 or later. Add this to your `Cargo.toml`:
+//! `uom` requires `rustc` 1.37.0 or later. Add this to your `Cargo.toml`:
 //!
 //! ```toml
 //! [dependencies]
-//! uom = "0.29.0"
+//! uom = "0.31.0"
 //! ```
 //!
 //! and this to your crate root:
@@ -66,7 +66,7 @@
 //! ```toml
 //! [dependencies]
 //! uom = {
-//!     version = "0.29.0",
+//!     version = "0.31.0",
 //!     default-features = false,
 //!     features = [
 //!         "autoconvert", # automatic base unit conversion.
@@ -170,7 +170,12 @@
 // Clippy lints.
 #![cfg_attr(
     feature = "cargo-clippy",
-    allow(clippy::deprecated_cfg_attr, clippy::excessive_precision, clippy::inline_always)
+    allow(
+        clippy::deprecated_cfg_attr,
+        clippy::excessive_precision,
+        clippy::inconsistent_digit_grouping, // https://github.com/rust-lang/rust-clippy/issues/6096
+        clippy::inline_always
+    )
 )]
 // Lints allowed in tests because they are unavoidable in the generic code when a type may or may
 // not need to be dereferenced or cloned.
@@ -180,7 +185,7 @@
 )]
 
 // Fail to compile if no underlying storage type features are specified.
-#[cfg_attr(rustfmt, rustfmt_skip)]
+#[rustfmt::skip]
 #[cfg(not(any(
     feature = "usize", feature = "u8", feature = "u16", feature = "u32", feature = "u64",
     feature = "u128",
@@ -241,11 +246,21 @@ pub mod lib {
         pub use std::ops::*;
         pub use typenum::type_operators::*;
     }
+
+    // Export `panic` module when the `std` feature is not enabled. `RefUnwindSafe` and `UnwindSafe`
+    // traits do not exist in `core` but are conditionally needed in traits defined by `uom` when
+    // `std` is enabled. These definitions work around conditional requirements.
+    #[cfg(not(feature = "std"))]
+    pub mod panic {
+        pub trait RefUnwindSafe {}
+        pub trait UnwindSafe {}
+    }
 }
 
 // Conditionally import num sub-crate types based on feature selection.
 #[doc(hidden)]
 pub mod num {
+    #[cfg(any(feature = "std", feature = "libm"))]
     pub use num_traits::float::Float;
 
     pub use num_traits::{pow, FromPrimitive, Num, One, Saturating, Signed, ToPrimitive, Zero};
@@ -339,6 +354,9 @@ mod system;
 #[macro_use]
 mod quantity;
 
+#[macro_use]
+mod unit;
+
 #[cfg(feature = "si")]
 #[macro_use]
 pub mod si;
@@ -389,7 +407,7 @@ pub trait Conversion<V> {
     /// no coefficient exists.
     #[inline(always)]
     fn coefficient() -> Self::T {
-        <Self::T as num::One>::one()
+        <Self::T as crate::num::One>::one()
     }
 
     /// Constant portion of [conversion factor](https://jcgm.bipm.org/vim/en/1.24.html) for
@@ -400,7 +418,7 @@ pub trait Conversion<V> {
     #[inline(always)]
     #[allow(unused_variables)]
     fn constant(op: ConstantOp) -> Self::T {
-        <Self::T as num::Zero>::zero()
+        <Self::T as crate::num::Zero>::zero()
     }
 
     /// Instance [conversion factor](https://jcgm.bipm.org/vim/en/1.24.html).
@@ -426,8 +444,8 @@ pub trait ConversionFactor<V>:
     + lib::ops::Sub<Self, Output = Self>
     + lib::ops::Mul<Self, Output = Self>
     + lib::ops::Div<Self, Output = Self>
-    + num::Zero
-    + num::One
+    + crate::num::Zero
+    + crate::num::One
 {
     /// Raises a `ConversionFactor<V>` to an integer power.
     fn powi(self, e: i32) -> Self;
@@ -459,14 +477,14 @@ pub trait Kind:
 storage_types! {
     types: Float;
 
-    impl ::Conversion<V> for V {
+    impl crate::Conversion<V> for V {
         type T = V;
 
         #[inline(always)]
-        fn constant(op: ::ConstantOp) -> Self::T {
+        fn constant(op: crate::ConstantOp) -> Self::T {
             match op {
-                ::ConstantOp::Add => -<Self::T as ::num::Zero>::zero(),
-                ::ConstantOp::Sub => <Self::T as ::num::Zero>::zero(),
+                crate::ConstantOp::Add => -<Self::T as crate::num::Zero>::zero(),
+                crate::ConstantOp::Sub => <Self::T as crate::num::Zero>::zero(),
             }
         }
 
@@ -476,10 +494,10 @@ storage_types! {
         }
     }
 
-    impl ::ConversionFactor<V> for V {
+    impl crate::ConversionFactor<V> for V {
         #[inline(always)]
         fn powi(self, e: i32) -> Self {
-            <V as ::num::Float>::powi(self, e)
+            <V as crate::num::Float>::powi(self, e)
         }
 
         #[inline(always)]
@@ -492,8 +510,8 @@ storage_types! {
 storage_types! {
     types: PrimInt;
 
-    impl ::Conversion<V> for V {
-        type T = ::num::rational::Ratio<V>;
+    impl crate::Conversion<V> for V {
+        type T = crate::num::rational::Ratio<V>;
 
         #[inline(always)]
         fn into_conversion(&self) -> Self::T {
@@ -501,7 +519,7 @@ storage_types! {
         }
     }
 
-    impl ::ConversionFactor<V> for ::num::rational::Ratio<V> {
+    impl crate::ConversionFactor<V> for crate::num::rational::Ratio<V> {
         #[inline(always)]
         fn powi(self, e: i32) -> Self {
             self.pow(e)
@@ -517,8 +535,8 @@ storage_types! {
 storage_types! {
     types: BigInt, BigUint;
 
-    impl ::Conversion<V> for V {
-        type T = ::num::rational::Ratio<V>;
+    impl crate::Conversion<V> for V {
+        type T = crate::num::rational::Ratio<V>;
 
         #[inline(always)]
         fn into_conversion(&self) -> Self::T {
@@ -526,13 +544,13 @@ storage_types! {
         }
     }
 
-    impl ::ConversionFactor<V> for ::num::rational::Ratio<V> {
+    impl crate::ConversionFactor<V> for crate::num::rational::Ratio<V> {
         #[inline(always)]
         fn powi(self, e: i32) -> Self {
             match e.cmp(&0) {
-                ::lib::cmp::Ordering::Equal => <Self as ::num::One>::one(),
-                ::lib::cmp::Ordering::Less => ::num::pow::pow(self.recip(), (-e) as usize),
-                ::lib::cmp::Ordering::Greater => ::num::pow::pow(self, e as usize),
+                crate::lib::cmp::Ordering::Equal => <Self as crate::num::One>::one(),
+                crate::lib::cmp::Ordering::Less => crate::num::pow::pow(self.recip(), (-e) as usize),
+                crate::lib::cmp::Ordering::Greater => crate::num::pow::pow(self, e as usize),
             }
         }
 
@@ -546,7 +564,7 @@ storage_types! {
 storage_types! {
     types: Rational, Rational32, Rational64;
 
-    impl ::Conversion<V> for V {
+    impl crate::Conversion<V> for V {
         type T = V;
 
         #[inline(always)]
@@ -555,7 +573,7 @@ storage_types! {
         }
     }
 
-    impl ::ConversionFactor<V> for V {
+    impl crate::ConversionFactor<V> for V {
         #[inline(always)]
         fn powi(self, e: i32) -> Self {
             self.pow(e)
@@ -571,7 +589,7 @@ storage_types! {
 storage_types! {
     types: BigRational;
 
-    impl ::Conversion<V> for V {
+    impl crate::Conversion<V> for V {
         type T = V;
 
         #[inline(always)]
@@ -580,13 +598,13 @@ storage_types! {
         }
     }
 
-    impl ::ConversionFactor<V> for V {
+    impl crate::ConversionFactor<V> for V {
         #[inline(always)]
         fn powi(self, e: i32) -> Self {
             match e.cmp(&0) {
-                ::lib::cmp::Ordering::Equal => <Self as ::num::One>::one(),
-                ::lib::cmp::Ordering::Less => ::num::pow::pow(self.recip(), (-e) as usize),
-                ::lib::cmp::Ordering::Greater => ::num::pow::pow(self, e as usize),
+                crate::lib::cmp::Ordering::Equal => <Self as crate::num::One>::one(),
+                crate::lib::cmp::Ordering::Less => crate::num::pow::pow(self.recip(), (-e) as usize),
+                crate::lib::cmp::Ordering::Greater => crate::num::pow::pow(self, e as usize),
             }
         }
 
@@ -613,6 +631,8 @@ pub mod fmt {
 
 /// Unicode string slice manipulation for quantities.
 pub mod str {
+    use crate::lib::fmt::{self, Display, Formatter};
+
     /// Represents an error encountered while parsing a string into a `Quantity`.
     #[allow(missing_copy_implementations)]
     #[derive(Clone, Debug, Eq, PartialEq)]
@@ -633,4 +653,19 @@ pub mod str {
         /// unit name (description) is correct.
         UnknownUnit,
     }
+
+    impl Display for ParseQuantityError {
+        fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+            use ParseQuantityError::*;
+
+            match *self {
+                NoSeparator => write!(f, "no space between quantity and units"),
+                ValueParseError => write!(f, "error parsing unit quantity"),
+                UnknownUnit => write!(f, "unrecognized unit of measure"),
+            }
+        }
+    }
+
+    #[cfg(feature = "std")]
+    impl crate::lib::error::Error for ParseQuantityError {}
 }
